@@ -80,10 +80,22 @@
         let interval;
 
         async function loadText() {
-            const response = await fetch('processed_text.json');
-            const data = await response.json();
-            words = data.words;
-            updateDisplay();
+            try {
+                const response = await fetch('/get_text');
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error(result.error);
+                    return;
+                }
+        
+                // Decode Base64 JSON
+                const decodedData = JSON.parse(atob(result.data));
+                words = decodedData.words;
+                updateDisplay();
+            } catch (error) {
+                console.error("Failed to load text:", error);
+            }
         }
 
         function updateDisplay() {
