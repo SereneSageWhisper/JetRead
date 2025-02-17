@@ -82,16 +82,8 @@
         async function loadText() {
             try {
                 const response = await fetch('/get_text');
-                const result = await response.json();
-                
-                if (result.error) {
-                    console.error(result.error);
-                    return;
-                }
-        
-                // Decode Base64 JSON
-                const decodedData = JSON.parse(atob(result.data));
-                words = decodedData.words;
+                const text = await response.text();
+                words = text.split(" "); // Split plain text into words
                 updateDisplay();
             } catch (error) {
                 console.error("Failed to load text:", error);
