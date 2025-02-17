@@ -1,42 +1,47 @@
-import json
 import os
+import pandas as pd
+import nltk
+import json
+import base64
+from nltk.tokenize import word_tokenize
+from flask import Flask, jsonify
+
+nltk.download("punkt")
+
+app = Flask(__name__)
 
 def read_text_file(file_path):
-    """Reads a text file and handles file errors."""
+    """Reads text from file if exists, else raises an error."""
     if not os.path.exists(file_path):
-        print("Error: File not found.")
-        return None
+        raise FileNotFoundError(f"Error: File '{file_path}' not found.")
     
     with open(file_path, "r", encoding="utf-8") as file:
-        text = file.read()
+        return file.read()
+
+def preprocess_text(text):
+    """Cleans text using Pandas and tokenizes words using NLTK."""
+    df = pd.DataFrame([text], columns=["text"])
+    df["text"] = df["text"].str.replace(r"\\n|\\r", " ", regex=True)
+    df["text"] = df["text"].str.replace(r"\s+", " ", regex=True).str.strip()
     
-    return text
+    tokens = word_tokenize(df["text"][0])  # Tokenize words
+    return tokens
 
-def clean_text(text):
-    """Cleans the text by removing extra spaces, handling special characters, and ensuring UTF-8 encoding."""
-    text = text.replace("\n", " ").replace("\r", " ")
-    text = " ".join(text.split())  # Removes extra spaces
-    return text
+@app.route('/get_text', methods=['GET'])
+def get_text():
+    """Serves processed words directly without saving files."""
+    try:
+        file_path = "input.txt"
+        text = read_text_file(file_path)
+        words = preprocess_text(text)
 
-def split_into_words(text):
-    """Splits text into individual words."""
-    words = text.split(" ")
-    return words
-
-def save_to_json(data, output_file="processed_text.json"):
-    """Saves processed text to a JSON file for frontend use."""
-    with open(output_file, "w", encoding="utf-8") as file:
-        json.dump({"words": data}, file, ensure_ascii=False, indent=2)
-
-def main():
-    file_path = "input.txt"
-    text = read_text_file(file_path)
-
-    if text:
-        cleaned_text = clean_text(text)
-        words = split_into_words(cleaned_text)
-        save_to_json(words)
-        print(f"Processed text saved to 'processed_text.json' ({len(words)} words)")
+        # Convert to JSON and encode in Base64 to prevent file write
+        json_data = json.dumps({"words": words})
+        encoded_data = base64.b64encode(json_data.encode()).decode()
+        
+        return jsonify({"data": encoded_data})  # Frontend can decode this
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
