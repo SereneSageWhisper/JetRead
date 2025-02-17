@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f4f4f4;
+            transition: background 0.3s;
+        }
+        .reader {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode {
+            background: black;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="reader" id="reader">Loading...</div>
+    <script>
+        let words = [];
+        let index = 0;
+        let wpm = 300;
+        let isPaused = false;
+
+        async function loadText() {
+            const response = await fetch('processed_text.json');
+            const data = await response.json();
+            words = data.word_pairs;
+            startReading();
+        }
+
+        function startReading() {
+            if (words.length === 0) return;
+            setInterval(() => {
+                if (!isPaused && index < words.length) {
+                    document.getElementById('reader').textContent = words[index];
+                    index++;
+                }
+            }, 60000 / wpm);
+        }
+
+        document.addEventListener("keydown", (event) => {
+            if (event.code === "Space") isPaused = !isPaused;
+            if (event.code === "ArrowRight") index += 2;
+            if (event.code === "ArrowLeft") index = Math.max(0, index - 2);
+            if (event.code === "ArrowUp") wpm += 50;
+            if (event.code === "ArrowDown") wpm = Math.max(100, wpm - 50);
+            if (event.code === "KeyR") index = 0;
+            if (event.code === "KeyF") document.body.classList.toggle("dark-mode");
+        });
+
+        loadText();
+    </script>
+</body>
+</html>
