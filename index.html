@@ -81,14 +81,15 @@
 
         async function loadText() {
             try {
-                const response = await fetch('/get_text');
+                const response = await fetch('https://jetread.onrender.com/get_text');
                 const text = await response.text();
-                words = text.split(" "); // Split plain text into words
+                words = text.split(" "); // Convert text into words array
                 updateDisplay();
             } catch (error) {
                 console.error("Failed to load text:", error);
             }
         }
+
 
         function updateDisplay() {
             if (words.length === 0) return;
