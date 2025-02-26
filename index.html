@@ -187,8 +187,14 @@
                 document.getElementById("toggle").textContent = isPaused ? "Start" : "Pause";
                 startReading();
             }
-            if (event.code === "ArrowRight") index += wordCount;
-            if (event.code === "ArrowLeft") index = Math.max(0, index - wordCount);
+            if (event.code === "ArrowRight") {
+                index += wordCount;
+                updateDisplay(); // Update display when moving forward
+            }
+            if (event.code === "ArrowLeft") {
+                index = Math.max(0, index - wordCount);
+                updateDisplay(); // Update display when moving backward
+            }
             if (event.code === "ArrowUp") {
                 wpm += 50;
                 updateDisplay();
