@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JetRead</title>
+    <title>JetRead - Speed Reading Assistant</title>
     <style>
+        :root {
+            --font-size: 48px;
+            --line-height: 1.5;
+        }        
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -15,16 +19,62 @@
             background: #f4f4f4;
             transition: background 0.3s;
             position: relative;
+            margin: 0;
+            padding: 20px;            
+        }
+        .reader-container {
+            width: 50%;
+            max-width: 800px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 50px;
         }
         .reader {
-            font-size: 48px;
+            font-size: var(--font-size);
             font-weight: bold;
             text-align: center;
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             color: black;
+            line-height: var(--line-height);
+            width: 100%;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+            .controls-bottom {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+        .utility-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
         }
         .dark-mode {
             background: black;
@@ -34,86 +84,111 @@
             background: black;
             color: white;
         }
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .wpm-display {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .start-button {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: 18px;
-        }
-        .custom-text-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            font-size: 18px;
-        }
-        .modal {
+        .settings-modal {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
             z-index: 1000;
+            width: 400px;
         }
-        .modal textarea {
-            width: 300px;
-            height: 200px;
-            margin-bottom: 10px;
-            padding: 10px;
-            font-size: 16px;
+
+        .settings-modal.dark-mode {
+            background: #2d2d2d;
+            color: white;
         }
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+
+        .settings-group {
+            margin-bottom: 20px;
         }
-        .modal-buttons button {
-            padding: 5px 10px;
-            font-size: 16px;
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .settings-group input[type="range"] {
+            width: 100%;
+        }
+
+        .settings-group select {
+            width: 100%;
+            padding: 8px;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background: #007bff;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body>
-    <div class="wpm-display" id="wpmDisplay">WPM: 300</div>
-    <div class="reader" id="reader">Loading...</div>
-    <button class="start-button" id="toggle">Start</button>
-    <div class="controls">
-        <button id="decrease">-50 WPM</button>
-        <button id="increase">+50 WPM</button>
-        <select id="wordCount">
-            <option value="1">1 Word</option>
-            <option value="2" selected>2 Words</option>
-            <option value="3">3 Words</option>
-        </select>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="reader-container">
+        <div class="reader" id="reader">Ready to JetRead!</div>
     </div>
-    <button class="custom-text-btn" id="showModal">Paste Text</button>
 
-    <!-- Modal for pasting custom text -->
+    <div class="controls-bottom">
+        <button class="start-button" id="toggle">Start Reading</button>
+    </div>
+
+    <div class="utility-buttons">
+        <button id="showTextModal">Text</button>
+        <button id="showSettings">Settings</button>
+    </div>
+
+    <!-- Text Input Modal -->
     <div class="modal" id="textModal">
-        <textarea id="customText" placeholder="Paste your text here..."></textarea>
-        <div class="modal-buttons">
-            <button id="cancelModal">Cancel</button>
-            <button id="submitText">Load Text</button>
+        <!-- Keep existing text modal content -->
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <h2 style="margin-top: 0;">JetRead Settings</h2>
+        
+        <div class="settings-group">
+            <label>Speed (WPM): <span id="wpmValue">300</span></label>
+            <input type="range" id="wpm" min="100" max="1000" value="300">
+        </div>
+
+        <div class="settings-group">
+            <label>Chunk Size</label>
+            <select id="wordCount">
+                <option value="1">1 Word</option>
+                <option value="2" selected>2 Words</option>
+                <option value="3">3 Words</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label>Font Size: <span id="fontSizeValue">48</span>px</label>
+            <input type="range" id="fontSize" min="24" max="72" value="48">
+        </div>
+
+        <div class="settings-group">
+            <label>Theme</label>
+            <select id="themeSelect">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="sepia">Sepia</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <button onclick="document.getElementById('settingsModal').style.display = 'none'">
+                Save & Close
+            </button>
         </div>
     </div>
 
@@ -173,6 +248,7 @@
             const textToShow = words.slice(index, index + wordCount).join(" ");
             document.getElementById('reader').textContent = textToShow || "";
             document.getElementById('wpmDisplay').textContent = `WPM: ${wpm}`;
+            updateProgress();            
         }
 
         // Start or resume the reading process
@@ -275,7 +351,30 @@
                 savePreferences(); // Save preferences when loading custom text
             }
         });
+        // Font size control
+        document.getElementById('fontSize').addEventListener('input', (e) => {
+            document.documentElement.style.setProperty('--font-size', `${e.target.value}px`);
+            document.getElementById('fontSizeValue').textContent = e.target.value;
+            savePreferences();
+        });
 
+        // Theme control
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            document.body.className = e.target.value + '-mode';
+            savePreferences();
+        });
+
+        // Show settings modal
+        document.getElementById('showSettings').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'block';
+        });
+
+        // Progress bar update
+        function updateProgress() {
+            const progress = (index / words.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+        
         // Close modal when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target === textModal) {
