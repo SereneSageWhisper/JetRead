@@ -23,7 +23,6 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #f4f4f4;
             transition: background 0.3s, color 0.3s;
         }
 
@@ -31,14 +30,20 @@
         .light-mode {
             background: #f4f4f4;
             color: black;
+            --button-bg: #4CAF50;
+            --button-hover: #45a049;
         }
         .dark-mode {
             background: #1a1a1a;
             color: white;
+            --button-bg: #2196F3;
+            --button-hover: #1976D2;
         }
         .sepia-mode {
             background: #f4ecd8;
             color: #5b4636;
+            --button-bg: #795548;
+            --button-hover: #5D4037;
         }
 
         /* Title */
@@ -59,6 +64,25 @@
             color: var(--text-color);
             max-width: 80%;
             margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Button containers */
+        .controls-bottom {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+        }
+
+        .utility-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
         }
 
         /* Buttons */
