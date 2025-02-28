@@ -296,6 +296,20 @@
             localStorage.setItem("boldText", document.getElementById('boldText').checked);
         }
 
+        // Load default text
+        async function loadDefaultText() {
+            try {
+                const response = await fetch('https://jetread.onrender.com/get_text');
+                const text = await response.text();
+                words = text.split(" ");
+                updateDisplay();
+            } catch (error) {
+                console.error("Failed to load text:", error);
+                words = ["Welcome to JetRead!", "Paste your text using the Text button", "or load default content here."];
+                updateDisplay();
+            }
+        }
+
         // Update display
         function updateDisplay() {
             if (words.length === 0) return;
@@ -351,16 +365,23 @@
 
         // Modal controls
         function showModal(id) {
-            document.getElementById(id).style.display = 'block';
+            const modal = document.getElementById(id);
+            modal.style.display = 'block';
+            modal.className = `modal ${document.body.className}`;
+            
             if (id === 'textModal') {
                 const preview = words.slice(Math.max(0, index - 10), index + 10).join(" ");
                 document.getElementById('textPreview').textContent = preview;
+                document.getElementById('textPreview').className = `text-preview ${document.body.className}`;
             }
         }
 
         function hideModal(id) {
             document.getElementById(id).style.display = 'none';
-            if (id === 'textModal') document.getElementById('customText').value = '';
+            if (id === 'textModal') {
+                document.getElementById('customText').value = '';
+                document.getElementById('textPreview').textContent = '';
+            }
         }
 
         // Event listeners
@@ -371,13 +392,12 @@
         });
 
         document.getElementById('toggle').addEventListener('click', toggleReading);
-
         document.getElementById('showTextModal').addEventListener('click', () => showModal('textModal'));
         document.getElementById('showSettings').addEventListener('click', () => showModal('settingsModal'));
 
         // Settings controls
         document.getElementById('wpm').addEventListener('input', (e) => {
-            wpm = e.target.value;
+            wpm = parseInt(e.target.value) || 300;
             savePreferences();
             if (!isPaused) startReading();
         });
@@ -434,7 +454,8 @@
             if (e.code === 'KeyF') {
                 const themes = ["light", "dark", "sepia"];
                 const currentTheme = document.body.className.replace("-mode", "");
-                const nextTheme = themes[(themes.indexOf(currentTheme) + 1] || themes[0];
+                const nextIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
+                const nextTheme = themes[nextIndex];
                 document.body.className = nextTheme + "-mode";
                 document.getElementById('themeSelect').value = nextTheme;
                 savePreferences();
