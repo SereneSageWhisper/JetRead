@@ -8,7 +8,11 @@
         :root {
             --font-size: 48px;
             --line-height: 1.5;
-        }        
+            --text-color: black;
+            --button-bg: #007bff;
+            --button-hover: #0056b3;
+        }
+
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -16,81 +20,63 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background: #f4f4f4;
             transition: background 0.3s, color 0.3s;
-            position: relative;
-            margin: 0;
-            padding: 20px;            
         }
-        .reader-container {
-            width: 50%;
-            max-width: 800px;
-            min-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 50px;
+
+        /* Theme-specific styles */
+        .light-mode {
+            background: #f4f4f4;
+            color: black;
         }
+        .dark-mode {
+            background: #1a1a1a;
+            color: white;
+        }
+        .sepia-mode {
+            background: #f4ecd8;
+            color: #5b4636;
+        }
+
+        /* Title */
+        .title {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Reader text */
         .reader {
             font-size: var(--font-size);
             font-weight: bold;
             text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            color: black;
             line-height: var(--line-height);
-            width: 100%;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: var(--text-color);
+            max-width: 80%;
+            margin: 0 auto;
         }
-        .controls-bottom {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-        }
-        .utility-buttons {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            gap: 15px;
-        }
+
+        /* Buttons */
         button {
             padding: 12px 24px;
             font-size: 16px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            background: #007bff;
+            background: var(--button-bg);
             color: white;
             transition: all 0.2s;
         }
         button:hover {
-            background: #0056b3;
+            background: var(--button-hover);
             transform: translateY(-2px);
         }
-        /* Theme Styles */
-        .dark-mode {
-            background: #1a1a1a;
-            color: white;
-        }
-        .dark-mode .reader {
-            background: #2d2d2d;
-        }
-        .sepia-mode {
-            background: #f4ecd8;
-            color: #5b4636;
-        }
-        .sepia-mode .reader {
-            background: #fffbf0;
-        }
+
         /* Modals */
         .modal {
             display: none;
@@ -99,11 +85,13 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             z-index: 1000;
-            width: 400px;
+            width: 50%;
+            max-height: 70vh;
+            overflow-y: auto;
         }
         .modal.dark-mode {
             background: #2d2d2d;
@@ -113,19 +101,8 @@
             background: #fffbf0;
             color: #5b4636;
         }
-        .settings-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
-            z-index: 1000;
-            width: 400px;
-        }
+
+        /* Settings modal */
         .settings-group {
             margin-bottom: 20px;
         }
@@ -134,40 +111,58 @@
             margin-bottom: 8px;
             font-weight: bold;
         }
-        .settings-group input[type="range"] {
+        .settings-group input[type="number"] {
             width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
         .settings-group select {
             width: 100%;
             padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
+
+        /* Progress bar */
         .progress-bar {
             position: fixed;
             top: 0;
             left: 0;
             height: 5px;
-            background: #007bff;
+            background: var(--button-bg);
             transition: width 0.3s ease;
         }
-        textarea {
-            width: 100%;
-            height: 200px;
+
+        /* Text modal */
+        .text-preview {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-top: 20px;
             padding: 10px;
-            margin-bottom: 15px;
+            background: #f9f9f9;
             border-radius: 8px;
-            border: 1px solid #ddd;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .text-preview.dark-mode {
+            background: #333;
+            color: white;
+        }
+        .text-preview.sepia-mode {
+            background: #f4ecd8;
+            color: #5b4636;
         }
     </style>
 </head>
-<body>
+<body class="light-mode">
     <div class="progress-bar" id="progressBar"></div>
-    
-    <div class="reader-container">
-        <div class="reader" id="reader">Ready to JetRead!</div>
-    </div>
+    <div class="title">JetRead</div>
+
+    <div class="reader" id="reader">Ready to JetRead!</div>
 
     <div class="controls-bottom">
-        <button class="start-button" id="toggle">Start Reading</button>
+        <button id="toggle">Start Reading</button>
     </div>
 
     <div class="utility-buttons">
@@ -179,6 +174,7 @@
     <div class="modal" id="textModal">
         <h2>Load Custom Text</h2>
         <textarea id="customText" placeholder="Paste your text here..."></textarea>
+        <div class="text-preview" id="textPreview"></div>
         <div class="settings-group">
             <button onclick="loadCustomText()">Load Text</button>
             <button onclick="hideModal('textModal')">Cancel</button>
@@ -186,12 +182,12 @@
     </div>
 
     <!-- Settings Modal -->
-    <div class="settings-modal" id="settingsModal">
+    <div class="modal" id="settingsModal">
         <h2>JetRead Settings</h2>
         
         <div class="settings-group">
-            <label>Speed (WPM): <span id="wpmValue">300</span></label>
-            <input type="range" id="wpm" min="100" max="1000" value="300">
+            <label>Speed (WPM):</label>
+            <input type="number" id="wpm" min="100" max="1000" value="300">
         </div>
 
         <div class="settings-group">
@@ -204,8 +200,13 @@
         </div>
 
         <div class="settings-group">
-            <label>Font Size: <span id="fontSizeValue">48</span>px</label>
-            <input type="range" id="fontSize" min="24" max="72" value="48">
+            <label>Font Size:</label>
+            <input type="number" id="fontSize" min="24" max="72" value="48">
+        </div>
+
+        <div class="settings-group">
+            <label>Bold Text</label>
+            <input type="checkbox" id="boldText">
         </div>
 
         <div class="settings-group">
@@ -232,13 +233,13 @@
 
         // Initialize settings
         function initSettings() {
-            // Load preferences
             const savedWpm = localStorage.getItem("wpm");
             const savedWordCount = localStorage.getItem("wordCount");
             const savedTheme = localStorage.getItem("theme");
             const savedIndex = localStorage.getItem("index");
             const savedText = localStorage.getItem("text");
             const savedFontSize = localStorage.getItem("fontSize");
+            const savedBoldText = localStorage.getItem("boldText");
 
             if (savedWpm) wpm = parseInt(savedWpm);
             if (savedWordCount) wordCount = parseInt(savedWordCount);
@@ -248,12 +249,14 @@
             if (savedFontSize) {
                 document.documentElement.style.setProperty('--font-size', `${savedFontSize}px`);
                 document.getElementById('fontSize').value = savedFontSize;
-                document.getElementById('fontSizeValue').textContent = savedFontSize;
+            }
+            if (savedBoldText) {
+                document.getElementById('boldText').checked = savedBoldText === "true";
+                updateBoldText();
             }
 
             // Set initial control values
             document.getElementById('wpm').value = wpm;
-            document.getElementById('wpmValue').textContent = wpm;
             document.getElementById('wordCount').value = wordCount;
             document.getElementById('themeSelect').value = savedTheme || "light";
         }
@@ -266,18 +269,7 @@
             localStorage.setItem("index", index.toString());
             localStorage.setItem("text", JSON.stringify(words));
             localStorage.setItem("fontSize", document.getElementById('fontSize').value);
-        }
-
-        // Load text from external source
-        async function loadDefaultText() {
-            try {
-                const response = await fetch('https://jetread.onrender.com/get_text');
-                const text = await response.text();
-                words = text.split(" ");
-                updateDisplay();
-            } catch (error) {
-                console.error("Failed to load text:", error);
-            }
+            localStorage.setItem("boldText", document.getElementById('boldText').checked);
         }
 
         // Update display
@@ -327,9 +319,19 @@
             }
         }
 
+        // Update bold text
+        function updateBoldText() {
+            const isBold = document.getElementById('boldText').checked;
+            document.getElementById('reader').style.fontWeight = isBold ? "bold" : "normal";
+        }
+
         // Modal controls
         function showModal(id) {
             document.getElementById(id).style.display = 'block';
+            if (id === 'textModal') {
+                const preview = words.slice(Math.max(0, index - 10), index + 10).join(" ");
+                document.getElementById('textPreview').textContent = preview;
+            }
         }
 
         function hideModal(id) {
@@ -352,7 +354,6 @@
         // Settings controls
         document.getElementById('wpm').addEventListener('input', (e) => {
             wpm = e.target.value;
-            document.getElementById('wpmValue').textContent = wpm;
             savePreferences();
             if (!isPaused) startReading();
         });
@@ -365,7 +366,11 @@
 
         document.getElementById('fontSize').addEventListener('input', (e) => {
             document.documentElement.style.setProperty('--font-size', `${e.target.value}px`);
-            document.getElementById('fontSizeValue').textContent = e.target.value;
+            savePreferences();
+        });
+
+        document.getElementById('boldText').addEventListener('change', () => {
+            updateBoldText();
             savePreferences();
         });
 
@@ -388,6 +393,26 @@
             if (e.code === 'ArrowLeft') {
                 index = Math.max(0, index - wordCount);
                 updateDisplay();
+                savePreferences();
+            }
+            if (e.code === 'ArrowUp') {
+                wpm = Math.min(1000, wpm + 50);
+                document.getElementById('wpm').value = wpm;
+                savePreferences();
+                if (!isPaused) startReading();
+            }
+            if (e.code === 'ArrowDown') {
+                wpm = Math.max(100, wpm - 50);
+                document.getElementById('wpm').value = wpm;
+                savePreferences();
+                if (!isPaused) startReading();
+            }
+            if (e.code === 'KeyF') {
+                const themes = ["light", "dark", "sepia"];
+                const currentTheme = document.body.className.replace("-mode", "");
+                const nextTheme = themes[(themes.indexOf(currentTheme) + 1] || themes[0];
+                document.body.className = nextTheme + "-mode";
+                document.getElementById('themeSelect').value = nextTheme;
                 savePreferences();
             }
         });
