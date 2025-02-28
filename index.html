@@ -17,7 +17,7 @@
             justify-content: center;
             height: 100vh;
             background: #f4f4f4;
-            transition: background 0.3s;
+            transition: background 0.3s, color 0.3s;
             position: relative;
             margin: 0;
             padding: 20px;            
@@ -47,7 +47,7 @@
             align-items: center;
             justify-content: center;
         }
-            .controls-bottom {
+        .controls-bottom {
             position: fixed;
             bottom: 30px;
             left: 50%;
@@ -76,13 +76,42 @@
             background: #0056b3;
             transform: translateY(-2px);
         }
+        /* Theme Styles */
         .dark-mode {
-            background: black;
+            background: #1a1a1a;
             color: white;
         }
         .dark-mode .reader {
-            background: black;
+            background: #2d2d2d;
+        }
+        .sepia-mode {
+            background: #f4ecd8;
+            color: #5b4636;
+        }
+        .sepia-mode .reader {
+            background: #fffbf0;
+        }
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 400px;
+        }
+        .modal.dark-mode {
+            background: #2d2d2d;
             color: white;
+        }
+        .modal.sepia-mode {
+            background: #fffbf0;
+            color: #5b4636;
         }
         .settings-modal {
             display: none;
@@ -97,31 +126,21 @@
             z-index: 1000;
             width: 400px;
         }
-
-        .settings-modal.dark-mode {
-            background: #2d2d2d;
-            color: white;
-        }
-
         .settings-group {
             margin-bottom: 20px;
         }
-
         .settings-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
         }
-
         .settings-group input[type="range"] {
             width: 100%;
         }
-
         .settings-group select {
             width: 100%;
             padding: 8px;
         }
-
         .progress-bar {
             position: fixed;
             top: 0;
@@ -129,6 +148,14 @@
             height: 5px;
             background: #007bff;
             transition: width 0.3s ease;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
@@ -150,12 +177,17 @@
 
     <!-- Text Input Modal -->
     <div class="modal" id="textModal">
-        <!-- Keep existing text modal content -->
+        <h2>Load Custom Text</h2>
+        <textarea id="customText" placeholder="Paste your text here..."></textarea>
+        <div class="settings-group">
+            <button onclick="loadCustomText()">Load Text</button>
+            <button onclick="hideModal('textModal')">Cancel</button>
+        </div>
     </div>
 
     <!-- Settings Modal -->
     <div class="settings-modal" id="settingsModal">
-        <h2 style="margin-top: 0;">JetRead Settings</h2>
+        <h2>JetRead Settings</h2>
         
         <div class="settings-group">
             <label>Speed (WPM): <span id="wpmValue">300</span></label>
@@ -186,9 +218,7 @@
         </div>
 
         <div class="settings-group">
-            <button onclick="document.getElementById('settingsModal').style.display = 'none'">
-                Save & Close
-            </button>
+            <button onclick="hideModal('settingsModal')">Close</button>
         </div>
     </div>
 
@@ -200,193 +230,172 @@
         let wordCount = 2;
         let interval;
 
-        // Save preferences to localStorage
-        function savePreferences() {
-            localStorage.setItem("wpm", wpm.toString());
-            localStorage.setItem("wordCount", wordCount.toString());
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-            localStorage.setItem("index", index.toString());
-            localStorage.setItem("text", JSON.stringify(words)); // Save the entire text
-        }
-
-        // Load preferences from localStorage
-        function loadPreferences() {
+        // Initialize settings
+        function initSettings() {
+            // Load preferences
             const savedWpm = localStorage.getItem("wpm");
             const savedWordCount = localStorage.getItem("wordCount");
             const savedTheme = localStorage.getItem("theme");
             const savedIndex = localStorage.getItem("index");
             const savedText = localStorage.getItem("text");
+            const savedFontSize = localStorage.getItem("fontSize");
 
             if (savedWpm) wpm = parseInt(savedWpm);
             if (savedWordCount) wordCount = parseInt(savedWordCount);
-            if (savedTheme === "dark") document.body.classList.add("dark-mode");
+            if (savedTheme) document.body.className = savedTheme + "-mode";
             if (savedIndex) index = parseInt(savedIndex);
             if (savedText) words = JSON.parse(savedText);
+            if (savedFontSize) {
+                document.documentElement.style.setProperty('--font-size', `${savedFontSize}px`);
+                document.getElementById('fontSize').value = savedFontSize;
+                document.getElementById('fontSizeValue').textContent = savedFontSize;
+            }
+
+            // Set initial control values
+            document.getElementById('wpm').value = wpm;
+            document.getElementById('wpmValue').textContent = wpm;
+            document.getElementById('wordCount').value = wordCount;
+            document.getElementById('themeSelect').value = savedTheme || "light";
         }
 
-        // Load text from localStorage or external source
-        async function loadText() {
-            const savedText = localStorage.getItem("text");
-            if (savedText) {
-                words = JSON.parse(savedText);
+        // Save preferences to localStorage
+        function savePreferences() {
+            localStorage.setItem("wpm", wpm.toString());
+            localStorage.setItem("wordCount", wordCount.toString());
+            localStorage.setItem("theme", document.body.className.replace("-mode", ""));
+            localStorage.setItem("index", index.toString());
+            localStorage.setItem("text", JSON.stringify(words));
+            localStorage.setItem("fontSize", document.getElementById('fontSize').value);
+        }
+
+        // Load text from external source
+        async function loadDefaultText() {
+            try {
+                const response = await fetch('https://jetread.onrender.com/get_text');
+                const text = await response.text();
+                words = text.split(" ");
                 updateDisplay();
-            } else {
-                try {
-                    const response = await fetch('https://jetread.onrender.com/get_text');
-                    const text = await response.text();
-                    words = text.split(" ");
-                    updateDisplay();
-                } catch (error) {
-                    console.error("Failed to load text:", error);
-                }
+            } catch (error) {
+                console.error("Failed to load text:", error);
             }
         }
 
-        // Update the display with the current word(s)
+        // Update display
         function updateDisplay() {
             if (words.length === 0) return;
             const textToShow = words.slice(index, index + wordCount).join(" ");
             document.getElementById('reader').textContent = textToShow || "";
-            document.getElementById('wpmDisplay').textContent = `WPM: ${wpm}`;
-            updateProgress();            
+            updateProgress();
         }
 
-        // Start or resume the reading process
+        // Update progress bar
+        function updateProgress() {
+            const progress = words.length > 0 ? (index / words.length) * 100 : 0;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+
+        // Start/pause reading
+        function toggleReading() {
+            isPaused = !isPaused;
+            document.getElementById('toggle').textContent = isPaused ? "Start Reading" : "Pause";
+            if (!isPaused) startReading();
+            else clearInterval(interval);
+            savePreferences();
+        }
+
+        // Start reading interval
         function startReading() {
             clearInterval(interval);
             interval = setInterval(() => {
                 if (!isPaused && index < words.length) {
-                    updateDisplay();
                     index += wordCount;
-                    savePreferences(); // Save preferences periodically
+                    updateDisplay();
+                    savePreferences();
                 }
             }, 60000 / wpm);
         }
 
-        // Event listeners for controls
-        document.getElementById("toggle").addEventListener("click", () => {
-            isPaused = !isPaused;
-            document.getElementById("toggle").textContent = isPaused ? "Start" : "Pause";
-            startReading();
-            savePreferences(); // Save preferences when toggling
-        });
-
-        document.getElementById("increase").addEventListener("click", () => {
-            wpm += 50;
-            updateDisplay();
-            startReading();
-            savePreferences(); // Save preferences when changing WPM
-        });
-
-        document.getElementById("decrease").addEventListener("click", () => {
-            wpm = Math.max(100, wpm - 50);
-            updateDisplay();
-            startReading();
-            savePreferences(); // Save preferences when changing WPM
-        });
-
-        document.getElementById("wordCount").addEventListener("change", (event) => {
-            wordCount = parseInt(event.target.value);
-            updateDisplay();
-            savePreferences(); // Save preferences when changing word count
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener("keydown", (event) => {
-            if (event.code === "Space") {
-                isPaused = !isPaused;
-                document.getElementById("toggle").textContent = isPaused ? "Start" : "Pause";
-                startReading();
-                savePreferences(); // Save preferences when toggling
-            }
-            if (event.code === "ArrowRight") {
-                index += wordCount;
-                updateDisplay();
-                savePreferences(); // Save preferences when navigating
-            }
-            if (event.code === "ArrowLeft") {
-                index = Math.max(0, index - wordCount);
-                updateDisplay();
-                savePreferences(); // Save preferences when navigating
-            }
-            if (event.code === "ArrowUp") {
-                wpm += 50;
-                updateDisplay();
-                startReading();
-                savePreferences(); // Save preferences when changing WPM
-            }
-            if (event.code === "ArrowDown") {
-                wpm = Math.max(100, wpm - 50);
-                updateDisplay();
-                startReading();
-                savePreferences(); // Save preferences when changing WPM
-            }
-            if (event.code === "KeyF") {
-                document.body.classList.toggle("dark-mode");
-                savePreferences(); // Save preferences when toggling theme
-            }
-        });
-
-        // Modal functionality
-        const textModal = document.getElementById('textModal');
-        const customText = document.getElementById('customText');
-
-        document.getElementById('showModal').addEventListener('click', () => {
-            textModal.style.display = 'block';
-            customText.focus();
-        });
-
-        document.getElementById('cancelModal').addEventListener('click', () => {
-            textModal.style.display = 'none';
-            customText.value = '';
-        });
-
-        document.getElementById('submitText').addEventListener('click', () => {
-            if (customText.value.trim()) {
-                words = customText.value.split(/\s+/);
+        // Load custom text
+        function loadCustomText() {
+            const text = document.getElementById('customText').value.trim();
+            if (text) {
+                words = text.split(/\s+/);
                 index = 0;
-                textModal.style.display = 'none';
+                hideModal('textModal');
                 updateDisplay();
-                customText.value = '';
-                savePreferences(); // Save preferences when loading custom text
+                savePreferences();
             }
+        }
+
+        // Modal controls
+        function showModal(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).style.display = 'none';
+            if (id === 'textModal') document.getElementById('customText').value = '';
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initSettings();
+            if (!localStorage.getItem("text")) loadDefaultText();
+            else updateDisplay();
         });
-        // Font size control
+
+        document.getElementById('toggle').addEventListener('click', toggleReading);
+
+        document.getElementById('showTextModal').addEventListener('click', () => showModal('textModal'));
+        document.getElementById('showSettings').addEventListener('click', () => showModal('settingsModal'));
+
+        // Settings controls
+        document.getElementById('wpm').addEventListener('input', (e) => {
+            wpm = e.target.value;
+            document.getElementById('wpmValue').textContent = wpm;
+            savePreferences();
+            if (!isPaused) startReading();
+        });
+
+        document.getElementById('wordCount').addEventListener('change', (e) => {
+            wordCount = parseInt(e.target.value);
+            savePreferences();
+            updateDisplay();
+        });
+
         document.getElementById('fontSize').addEventListener('input', (e) => {
             document.documentElement.style.setProperty('--font-size', `${e.target.value}px`);
             document.getElementById('fontSizeValue').textContent = e.target.value;
             savePreferences();
         });
 
-        // Theme control
         document.getElementById('themeSelect').addEventListener('change', (e) => {
-            document.body.className = e.target.value + '-mode';
+            document.body.className = e.target.value + "-mode";
             savePreferences();
         });
 
-        // Show settings modal
-        document.getElementById('showSettings').addEventListener('click', () => {
-            document.getElementById('settingsModal').style.display = 'block';
-        });
-
-        // Progress bar update
-        function updateProgress() {
-            const progress = (index / words.length) * 100;
-            document.getElementById('progressBar').style.width = `${progress}%`;
-        }
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === textModal) {
-                textModal.style.display = 'none';
-                customText.value = '';
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleReading();
+            }
+            if (e.code === 'ArrowRight') {
+                index += wordCount;
+                updateDisplay();
+                savePreferences();
+            }
+            if (e.code === 'ArrowLeft') {
+                index = Math.max(0, index - wordCount);
+                updateDisplay();
+                savePreferences();
             }
         });
 
-        // Load preferences and text when the page loads
-        loadPreferences();
-        loadText();
-        updateDisplay();
+        // Close modals on outside click
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) hideModal(e.target.id);
+        });
     </script>
 </body>
 </html>
